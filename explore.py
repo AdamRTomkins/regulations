@@ -14,14 +14,23 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.ensemble import RandomForestClassifier
 
+from tools import extract_acronyms
 
 @st.cache()
 def load_data():
-    df = pd.read_table('rnr-examples.csv', sep=",", header=0, encoding='utf-8')
+    # Load the original challenge data
+    df = pd.read_table("data/rnr-examples.csv", sep=",", header=0, encoding="utf-8")
+    acronyms = []
+    #for t in df["text"].to_list():
+    #    acronyms.append(extract_acronyms(t))
+    
+    #df["acronyms"] = acronyms
     return df
+
 
 @st.cache()
 def load_taxonomy():
+    # Load and cache the taxonomy data
     return pd.read_csv("data/financial_taxonomy.csv")
 
 
@@ -36,30 +45,33 @@ def df_filter(column, name, dataframe):
     else:
         return dataframe[dataframe[column].isin(filter_vals)]
 
+
 st.sidebar.header("Regulatory Classifcation Data Explorer")
 
 with st.spinner("Loading Data"):
     df = load_data()
     taxonomy = load_taxonomy()
 
+
 def draw_data_viewer():
-    
+
     st.header("Explore Data")
 
     with st.sidebar:
         st.session_state["fdata"] = df_filter("label", "Classification", df)
 
-    for record in st.session_state["fdata"].to_dict('records')[:20]:
+    for record in st.session_state["fdata"].to_dict("records")[:20]:
         with st.expander(record["text"].split(".")[0]):
             st.text(record["text"])
 
-        
 
 def draw_taxonomy():
 
     st.header("Taxonomic Creation")
 
-    st.info("Here, we look at how we can derive knowledge from the given data. We propose a simple architecture to extract acronyms, and build a taxonomy of financial concepts. ")
+    st.info(
+        "Here, we look at how we can derive knowledge from the given data. We propose a simple architecture to extract acronyms, and build a taxonomy of financial concepts. "
+    )
 
     st.image("data/images/acronym_extraction.png")
     st.image("data/images/lexicon_creation.png")
@@ -73,9 +85,9 @@ def draw_taxonomy():
             apply_filter = st.form_submit_button("Apply")
             if apply_filter:
                 st.session_state["ftaxonomy"] = filtered_taxonomy
-    
+
     # View Taxonomy Records
-    for record in st.session_state["ftaxonomy"].to_dict('records')[:10]:
+    for record in st.session_state["ftaxonomy"].to_dict("records")[:10]:
         with st.expander(f"{record['acronym']} :  {record['semantic_type']}"):
             col1, col2 = st.columns(2)
             with col1:
@@ -87,27 +99,27 @@ def draw_taxonomy():
 
     st.header("Knowledge Representations")
 
-    
     if st.button("Draw Taxonomy Graph"):
         graph()
 
+
 def draw_introduction():
-    with open('README.txt') as f:
+
+    with st.expander("Approach"):
+        st.image("data/images/approach.png")
+
+    with open("README.md") as f:
         lines = f.readlines()
 
     st.markdown("\n".join(lines))
 
+
 def draw_notes():
-    with open('Notes.md') as f:
+    with open("Notes.md") as f:
         lines = f.readlines()
     for l in lines:
         st.write(l)
 
-def draw_readme():
-    with open('README.md') as f:
-        lines = f.readlines()
-    for l in lines:
-        st.write(l)
 
 def graph():
     from streamlit_agraph import agraph, Node, Edge, Config
@@ -117,62 +129,71 @@ def graph():
 
     semantic_types = set(st.session_state.ftaxonomy["semantic_type"].to_list())
     acronyms = set(st.session_state.ftaxonomy["acronym"].to_list())
-    
-    nodes.append( Node(id="root", 
-                        label="Taxonomy", 
-                        size=400, 
-                        ) 
-                    ) # includes **kwargs
 
+    nodes.append(
+        Node(
+            id="root",
+            label="Taxonomy",
+            size=400,
+        )
+    )  # includes **kwargs
 
     for semantic_type in semantic_types:
 
-        nodes.append( Node(id=semantic_type, 
-                        label=semantic_type, 
-                        size=400, 
-                        ) 
-                    ) # includes **kwargs
+        nodes.append(
+            Node(
+                id=semantic_type,
+                label=semantic_type,
+                size=400,
+            )
+        )  # includes **kwargs
 
     for acronym in acronyms:
 
-        nodes.append( Node(id=acronym, 
-                        label=acronym, 
-                        size=400, 
-                        ) 
-                    ) # includes **kwargs
-                    
+        nodes.append(
+            Node(
+                id=acronym,
+                label=acronym,
+                size=400,
+            )
+        )  # includes **kwargs
 
     for semantic_type in semantic_types:
 
-        edges.append( Edge(source="root", 
-                                label="subclass", 
-                                target=semantic_type, 
-                                type="CURVE_SMOOTH") 
-                            ) # includes **kwargs
+        edges.append(
+            Edge(
+                source="root",
+                label="subclass",
+                target=semantic_type,
+                type="CURVE_SMOOTH",
+            )
+        )  # includes **kwargs
 
+    for record in st.session_state.ftaxonomy.to_dict("records"):
 
-    for record in st.session_state.ftaxonomy.to_dict('records'):
+        edges.append(
+            Edge(
+                source=record["acronym"],
+                label="has_semantic_type",
+                target=record["semantic_type"],
+                type="CURVE_SMOOTH",
+            )
+        )  # includes **kwargs
 
-        edges.append( Edge(source=record["acronym"], 
-                        label="has_semantic_type", 
-                        target=record["semantic_type"], 
-                        type="CURVE_SMOOTH") 
-                    ) # includes **kwargs
+    config = Config(
+        width=500,
+        height=500,
+        directed=True,
+        nodeHighlightBehavior=True,
+        highlightColor="#F7A7A6",  # or "blue"
+        collapsible=True,
+        node={"labelProperty": "label"},
+        link={"labelProperty": "label", "renderLabel": True}
+        # **kwargs e.g. node_size=1000 or node_color="blue"
+    )
 
-    config = Config(width=500, 
-                    height=500, 
-                    directed=True,
-                    nodeHighlightBehavior=True, 
-                    highlightColor="#F7A7A6", # or "blue"
-                    collapsible=True,
-                    node={'labelProperty':'label'},
-                    link={'labelProperty': 'label', 'renderLabel': True}
-                    # **kwargs e.g. node_size=1000 or node_color="blue"
-                    ) 
+    return_value = agraph(nodes=nodes, edges=edges, config=config)
 
-    return_value = agraph(nodes=nodes, 
-                        edges=edges, 
-                        config=config)
 
 @st.experimental_memo
 def load_model(X, y):
@@ -186,26 +207,26 @@ def load_model(X, y):
 
     from sklearn.ensemble import RandomForestClassifier
 
-    clf = Pipeline([
-        ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('clf',  RandomForestClassifier()),
-    ])
+    clf = Pipeline(
+        [
+            ("vect", CountVectorizer()),
+            ("tfidf", TfidfTransformer()),
+            ("clf", RandomForestClassifier()),
+        ]
+    )
 
     with st.spinner("Fitting Model"):
         clf.fit(X, y)
-    
+
     return clf
 
 
 pages = {
-    "Introduction":draw_introduction,
-    "Report":draw_readme,
-    "Project Notes":draw_notes,
-    "Data Explorer":draw_data_viewer,
-    "Taxonomy Understanding":draw_taxonomy,
+    "Introduction": draw_introduction,
+    "Project Notes": draw_notes,
+    "Data Explorer": draw_data_viewer,
+    "Taxonomy Understanding": draw_taxonomy,
 }
-
 
 
 if "data" not in st.session_state:

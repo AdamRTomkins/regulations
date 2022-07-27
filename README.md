@@ -1,15 +1,16 @@
 # Regulatory Text Classification
 
-## Challange Points
+A report on the Regulatory Text Classification challenge. For installation instructions, see the end.
 
+## Challenge Points
 
-Ahead of addressing how I approached this challange, and evidence the various answers I give, I will summarise my answers here.
+Ahead of addressing how I approached this challenge, and evidence the various answers I give, I will summarise my answers here.
 
-Further to these challange points we have addressed some other forms of exploration in the problem through developing tooling in:
+Further to these challenge points we have addressed some other forms of exploration in the problem through developing tooling in:
 1. Dataset Exploration
 2. Automated Taxonomy Generation from the Dataset.
 
-# 1. Why is the model performing worse in a production setting?
+### 1. Why is the model performing worse in a production setting?
 
 This is due to many factors, the main factor is a flawed dataset with a __heavy class bias__. 
 This dooms most modelling approaches.
@@ -18,11 +19,11 @@ Other issues are:
 1. Poor featurization, including non-semantic tokens
 2. Small dataset
 3. Truncated Data
-4. Improved Data hiegiene
+4. Improved Data clensing
 
-# 2. How could we have predicted this?
+### 2. How could we have predicted this?
 
-This could have been easily predicted with more robust testing stratagies including:
+This could have been easily predicted with more robust testing strategies including:
 1. Test-Train Splits
 2. Cross Validation
 3. Hold out sets
@@ -32,28 +33,28 @@ These would all have given a better picture of the model, however, evaluating on
 to have issues with generalisation, and metrics will continue to reflect this bias, and give an overly generous 
 view of model performance over unseen data.
 
-## 3. What strategies could we employ to improve the performance? Please consider:
+### 3. What strategies could we employ to improve the performance? Please consider:
    
-In this report we implement several approaches in the [Notebook](challange.ipynb), and futher investigate claims,
-such as the imballanced class effect in the [Data Augmentation](notebooks/data_augmentation.ipynb).
+In this report we implement several approaches in the [Notebook](notebooks/challenge.ipynb), and further investigate claims,
+such as the imbalanced class effect in the [Data Augmentation](notebooks/data_augmentation.ipynb).
 
-The stratagies we adopt are:
+The strategies we adopt are:
 1. Augment the dataset with real world, domain specific, examples for negative classes.
 2. Implement a robust pre-processing pipeline to improve the semantic content of features.
 3. Use hold-out training, and cross validation for performance tracking.
 4. Expand the metrics used.
 
 Futher to this, we follow some more radical courses of action:
-1. Improve knowledge representatio through automated Knowledge Graph Creation
+1. Improve knowledge representation through automated Knowledge Graph Creation
 1. Build Tooling to support Data Exploration.
-2. Consider more advanced approaches to vectorisation through dense-vector representations.
+2. Consider more advanced approaches to vectorization through dense-vector representations.
 
 
 ## Approach
 
 The Approach taken in this task, followed to the general process:
 
-![Approach](approach.png)
+![Approach](data/images/approach.png)
 
 1. Focus on understanding the data, its characteristics and its limitations
 2. Apply some NLP best practices to the provided code to create a more robust approach.
@@ -346,3 +347,19 @@ For this demonstration, we lean on some external libraries for the heavy lifting
 2. textsearch for keyword search in documents
 3. transformers for semantic encoding and disambiguation
 4. wikipedia for Acronym resolution
+
+
+# Installation
+
+For this setup I have moved to a conda setup process.
+
+```
+conda create --name regulation python=3.7 -y
+conda activate regulation
+pip install -r requirements.txt
+```
+
+for running the streamlit demo, you can run:
+
+`streamlit run explore.py`
+
